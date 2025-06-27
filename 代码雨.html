@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码雨</title>
+    <style>
+        body {
+            margin: 0;
+            background: #1f1f1f;
+        }
+
+        #canvas {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        /**
+        * 获取随机字符
+        */
+        const getRandomChar = (min, max) => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return chars[Math.floor(Math.random() * chars.length)];
+        }
+    </script>
+    <script>
+        const canvas = document.querySelector('#canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 获取画布宽高: 浏览器窗口的宽高 X 设备像素比
+        canvas.width = window.innerWidth * devicePixelRatio;
+        canvas.height = window.innerHeight * devicePixelRatio;
+
+        // 字体大小
+        const fontSize = 16 * devicePixelRatio;
+        ctx.font = `${fontSize}px Arial`;
+
+        // 列数
+        const cols = Math.floor(canvas.width / fontSize);
+
+        // 记录已经绘制的字符的行数
+        const charIndex = new Array(cols).fill(0);
+
+        // 绘制
+        const draw = () => {
+            // 每次绘制时，添加一个画布区域的蒙层
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制字符
+            ctx.fillStyle = '#6be445';
+            ctx.textBaseline = 'top';
+            for (let i = 0; i < cols; i++) {
+                const char = getRandomChar();
+                const x = i * fontSize;
+                const y = charIndex[i] * fontSize;
+                ctx.fillText(char, x, y)
+                if (y >= canvas.height && Math.random() > 0.99) {
+                    charIndex[i] = 0;
+                } else {
+                    charIndex[i]++;
+                }
+            }
+        }
+
+        setInterval(() => {
+            draw();
+        }, 50);
+
+    </script>
+</body>
+
+</html>

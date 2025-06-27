@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>canvas基础</title>
+    <title>星座动画</title>
     <style>
         body {
             margin: 0;
@@ -53,7 +53,7 @@
                     this.x += this.vx * duration;
                     this.y += this.vy * duration;
 
-                    // 边界检测：XY轴超出边界时，改变XY轴方向
+                    // 边界检测：XY轴超出边界时，改变XY轴方向(即负向移动)
                     if (this.x < this.r / 2 || this.x > canvas.width - this.r / 2) {
                         this.vx *= -1;
                     }
