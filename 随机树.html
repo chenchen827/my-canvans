@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机树</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #93b5ad;
+            overflow: hidden;
+        }
+
+        .btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px 20px;
+            font-size: 16px;
+            color: white;
+            background: #234d44;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .btn:hover {
+            background: #2c7c7a;
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <button class="btn">刷新</button>
+    <script>
+        /**
+        * 获取随机数
+        * @param {number} min 最小值
+        * @param {number} max 最大值
+        * @return {number} 随机数
+        */
+        const getRandom = (min, max) => {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+    </script>
+
+    <script>
+        const btn = document.querySelector('.btn');
+        const canvas = document.querySelector('#canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth * devicePixelRatio;
+        canvas.height = window.innerHeight * devicePixelRatio;
+
+        btn.addEventListener('click', () => {
+            init()
+        });
+        init();
+
+        /**
+        * 初始化
+        */
+        function init() {
+            // 重置坐标系，并清空画布
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 设置画布坐标系
+            ctx.translate(canvas.width / 2, canvas.height);
+            ctx.scale(1, -1);
+            drawBranch([0, 20], 26, 180, 90)
+        }
+
+        /**
+        * 绘制树干
+        * @param {number} XY轴坐标
+        * @param {number} thick 树干宽度
+        * @param {number} length 长度
+        * @param {number} degree 角度
+        */
+        function drawBranch([x, y], thick, length, degree) {
+            if (thick < 10 && Math.random() < 0.2) {
+                return
+            }
+            if (thick <= 2) {
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = Math.random() < 0.5 ? '#f40' : '#fff';
+                ctx.fill();
+                return
+            }
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+
+            // 计算终点坐标
+            const x1 = x + length * Math.cos((degree * Math.PI) / 180);
+            const y1 = y + length * Math.sin((degree * Math.PI) / 180);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = '#333';
+            ctx.lineCap = 'round';
+            ctx.lineWidth = thick;
+            ctx.stroke()
+
+            drawBranch([x1, y1], thick * 0.8, length * 0.8, degree + Math.random() * 30);
+            drawBranch([x1, y1], thick * 0.8, length * 0.8, degree - Math.random() * 30);
+        };
+    </script>
+</body>
+
+</html>
