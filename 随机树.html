@@ -86,7 +86,7 @@
             }
             if (thick <= 2) {
                 ctx.beginPath();
-                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.arc(x, y, getRandom(3, 5), 0, Math.PI * 2);
                 ctx.fillStyle = Math.random() < 0.5 ? '#f40' : '#fff';
                 ctx.fill();
                 return
@@ -98,7 +98,7 @@
             const x1 = x + length * Math.cos((degree * Math.PI) / 180);
             const y1 = y + length * Math.sin((degree * Math.PI) / 180);
             ctx.lineTo(x1, y1);
-            ctx.strokeStyle = '#333';
+            ctx.strokeStyle = '#3d2809';
             ctx.lineCap = 'round';
             ctx.lineWidth = thick;
             ctx.stroke()
