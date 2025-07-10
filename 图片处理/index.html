@@ -29,14 +29,14 @@
 </head>
 
 <body>
-    <input class="button" type="color" value="#0000ff"></input>
+    <input class="button" type="color" value="#000"></input>
     <div class="container">
         <canvas></canvas>
     </div>
 
     <script>
         // 自定义颜色
-        let customColor = [255, 255, 255, 255];
+        let customColor = [0, 0, 0, 255];
 
         const canvas = document.querySelector('canvas');
         const button = document.querySelector('.button');
@@ -70,7 +70,6 @@
                         a = parseInt(hex.slice(7, 9), 16);
                     }
                 }
-
                 return [r, g, b, a];
             }
 

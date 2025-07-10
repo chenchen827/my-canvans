@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>鼠标粒子特效</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+        /* 重置所有元素的盒模型属性，确保一致的尺寸计算 */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* 设置 html 和 body 元素的高度为 100%，以充满整个视口 */
+        html,
+        body {
+            height: 100%;
+        }
+
+        /* 隐藏 body 元素的滚动条，设置显示方式为网格布局，文本颜色为白色，背景颜色为黑色 */
+        body {
+            overflow: hidden;
+            display: grid;
+            color: white;
+            background: black;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 定义一个用于展示鼠标粒子特效的自定义元素 -->
+    <pointer-particles></pointer-particles>
+
+    <script>
+        /**
+         * PointerParticle 类用于创建和管理单个粒子的属性和行为
+         * @param {number} spread - 粒子的扩散范围
+         * @param {number} speed - 粒子的速度
+         * @param {Object} component - 包含画布上下文和指针信息的对象
+         */
+        class PointerParticle {
+            constructor(spread, speed, component) {
+                const { ctx, pointer, hue } = component;
+
+                this.ctx = ctx;
+                this.x = pointer.x;
+                this.y = pointer.y;
+                this.mx = pointer.mx * 0.1;
+                this.my = pointer.my * 0.1;
+                this.size = Math.random() + 1;
+                this.decay = 0.01;
+                this.speed = speed * 0.08;
+                this.spread = spread * this.speed;
+                this.spreadX = (Math.random() - 0.5) * this.spread - this.mx;
+                this.spreadY = (Math.random() - 0.5) * this.spread - this.my;
+                this.color = `hsl(${hue}deg 90% 60%)`;
+            }
+
+            // 绘制粒子的方法
+            draw() {
+                this.ctx.fillStyle = this.color;
+                this.ctx.beginPath();
+                this.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            // 缩小粒子大小的方法
+            collapse() {
+                this.size -= this.decay;
+            }
+
+            // 更新粒子位置的方法
+            trail() {
+                this.x += this.spreadX * this.size;
+                this.y += this.spreadY * this.size;
+            }
+
+            // 更新粒子状态的方法，包括绘制、更新位置和缩小大小
+            update() {
+                this.draw();
+                this.trail();
+                this.collapse();
+            }
+        }
+
+        /**
+         * PointerParticles 类用于创建和管理所有粒子的集合
+         * @extends HTMLElement
+         */
+        class PointerParticles extends HTMLElement {
+            // 在窗口中注册自定义元素
+            static register(tag = 'pointer-particles') {
+                if ('customElements' in window) {
+                    customElements.define(tag, this);
+                }
+            }
+
+            // 自定义元素的样式
+            static css = `
+    :host {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  `;
+
+            constructor() {
+                super();
+
+                this.canvas;
+                this.ctx;
+                this.fps = 60;
+                this.msPerFrame = 1000 / this.fps;
+                this.timePrevious;
+                this.particles = [];
+                this.pointer = {
+                    x: 0,
+                    y: 0,
+                    mx: 0,
+                    my: 0,
+                };
+                this.hue = 0;
+                this.animationFrameId = null;
+            }
+
+            // 当元素被连接到 DOM 时调用的方法
+            connectedCallback() {
+                const canvas = document.createElement('canvas');
+                const shadowroot = this.attachShadow({ mode: 'open' });
+
+                // 回退到 style 标签插入方式以提高兼容性
+                const style = document.createElement('style');
+                style.textContent = PointerParticles.css;
+                shadowroot.appendChild(style);
+
+                shadowroot.appendChild(canvas);
+
+                this.canvas = canvas;
+                this.ctx = this.canvas.getContext('2d');
+                this.setCanvasDimensions();
+                this.setupEvents();
+                this.timePrevious = performance.now();
+                this.animateParticles();
+            }
+
+            // 当元素从 DOM 中移除时调用的方法
+            disconnectedCallback() {
+                cancelAnimationFrame(this.animationFrameId);
+                const parent = this.parentNode;
+                if (parent) {
+                    parent.removeEventListener('click', this.onClick);
+                    parent.removeEventListener('pointermove', this.onPointerMove);
+                }
+                window.removeEventListener('resize', this.onResize);
+            }
+
+            // 创建粒子的方法
+            createParticles(event, { count, speed, spread }) {
+                this.setPointerValues(event);
+
+                for (let i = 0; i < count; i++) {
+                    this.particles.push(new PointerParticle(spread, speed, this));
+                }
+            }
+
+            // 设置指针值的方法
+            setPointerValues(event) {
+                const rect = this.parentNode.getBoundingClientRect();
+                this.pointer.x = event.clientX - rect.left;
+                this.pointer.y = event.clientY - rect.top;
+                this.pointer.mx = event.movementX || 0;
+                this.pointer.my = event.movementY || 0;
+            }
+
+            // 设置事件监听器的方法
+            setupEvents() {
+                const parent = this.parentNode;
+
+                this.onClick = (event) => {
+                    this.createParticles(event, {
+                        count: 300,
+                        speed: Math.random() + 1,
+                        spread: Math.random() + 50,
+                    });
+                };
+
+                this.onPointerMove = (event) => {
+                    this.createParticles(event, {
+                        count: 20,
+                        speed: this.getPointerVelocity(event),
+                        spread: 1,
+                    });
+                };
+
+                this.onResize = () => this.setCanvasDimensions();
+
+                parent.addEventListener('click', this.onClick);
+                parent.addEventListener('pointermove', this.onPointerMove);
+                window.addEventListener('resize', this.onResize);
+            }
+
+            // 计算指针速度的方法
+            getPointerVelocity(event) {
+                const a = event.movementX;
+                const b = event.movementY;
+                return Math.sqrt(a * a + b * b);
+            }
+
+            // 处理粒子的方法，包括更新和移除尺寸过小的粒子
+            handleParticles() {
+                const alive = [];
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    const p = this.particles[i];
+                    p.update();
+                    if (p.size > 0.1) {
+                        alive.push(p);
+                    }
+                }
+
+                this.particles = alive;
+            }
+
+            // 设置画布尺寸的方法
+            setCanvasDimensions() {
+                const rect = this.parentNode.getBoundingClientRect();
+
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+
+            // 动画粒子的方法
+            animateParticles() {
+                this.animationFrameId = requestAnimationFrame(() => this.animateParticles());
+
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.hue = (this.hue + 3) % 360;
+
+                this.handleParticles();
+            }
+        }
+
+        // 注册自定义元素
+        PointerParticles.register();
+    </script>
+</body>
+
+</html>
